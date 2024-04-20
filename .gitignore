@@ -1,3 +1,5 @@
 # Ignore Python compiled files
 __pycache__/
 *.pyc
+*.npy
+*.csv
