@@ -106,7 +106,7 @@ def balanced_augmentation(data, augmentation_funcs=augmentation_funcs):
     # Count the number of object IDs in each class and calculate required augmentations
     class_counts = data.groupby('type')['obj_id'].nunique()
     min_class_count = class_counts.min()
-    target_obj_ids = min_class_count * 5  # Target is 5 times the smallest class's count
+    target_obj_ids = min_class_count * (len(augmentation_funcs) + 1)
 
     # Calculate the number of augmentations needed for each class to approach the target
     augmentations_needed = {
