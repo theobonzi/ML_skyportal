@@ -2,6 +2,8 @@ import pandas as pd
 import os
 import json
 import tqdm
+import numpy as np
+import random
 
 def load_BTS_data(BTS_path):
     """
@@ -47,3 +49,43 @@ def load_all_photometry(df, dataDir=None, save=False):
         print(f'File {filename} saved successfully')
 
     return res_df
+
+def load_all_data(photo_path, metadata_path, images_path):
+    photo_df = pd.read_csv(photo_path)
+    cand = pd.read_csv(metadata_path)
+    triplets = np.load(images_path, mmap_mode='r')
+    
+    columns_metadata = [
+        "objectId",
+        "sgscore1", "sgscore2", 
+        "distpsnr1", "distpsnr2", 
+        "fwhm", 
+        "magpsf", 
+        "sigmapsf", 
+        "ra", 
+        "dec", 
+        "diffmaglim", 
+        "ndethist", 
+        "nmtchps", 
+        "drb", 
+        "ncovhist", 
+        "sharpnr", 
+        "scorr", 
+        "sky"
+    ]
+    cand = cand[columns_metadata]
+
+    cand_obj_ids = set(cand['objectId'].unique())
+    photo_obj_ids = set(photo_df['obj_id'].unique())
+    objIds = list(cand_obj_ids.intersection(photo_obj_ids))
+    return photo_df, cand, triplets, objIds
+
+def get_data(objId, photo_df, cand, triplets):
+    one_cand = cand[cand['objectId'] == objId]
+    one_image = triplets[one_cand.index[0]]
+    one_photo = photo_df[photo_df['obj_id'] == objId]
+    one_photo = one_photo.dropna()
+    return one_photo, one_cand, one_image
+
+def get_objId(objIds):
+    return objIds[random.randint(0, len(objIds))]

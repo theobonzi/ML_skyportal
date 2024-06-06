@@ -23,8 +23,9 @@ def plot_types_distributions(data, form='bar'):
 
     plt.show()
 
-def plot_photometry(lc):
-    color_dict = {'ztfg': 'green', 'ztfr': 'red', 'ztfi': 'y',
+def plot_photometry(lc, color_dict=None):
+    if color_dict is None:
+        color_dict = {'ztfg': 'green', 'ztfr': 'red', 'ztfi': 'y',
               'sdssg': 'green', 'sdssr': 'red', 'sdssi': 'y',
               'atlasc': 'cyan', 'atlaso': 'orange',}
     
@@ -35,7 +36,9 @@ def plot_photometry(lc):
         tf = lc[lc['filter'] == f]
         
         tf_det = tf[tf['mag'] >= 3.]
-        tf_ul = tf[tf['snr'] < 3]
+        tf_ul = tf
+        if 'snr' in tf.columns:
+            tf_ul = tf[tf['snr'] < 3]
 
         ax1.errorbar(tf_det['mjd'].values,
                      tf_det['mag'], yerr=tf_det['magerr'],
@@ -47,11 +50,11 @@ def plot_photometry(lc):
             ymax = np.max(tf_det['mag'])
                      
         if len(tf_ul) != 0:
-            ax1.errorbar(tf_ul['mjd'].values, tf_ul['limiting_mag'],
-                         markeredgecolor=color_dict[f],
-                         markerfacecolor='w', fmt='v', linestyle='None')
-            plt.plot([],[], 'kv', markeredgecolor='k', markerfacecolor='w',
-                     label='Upper limits')
+            # ax1.errorbar(tf_ul['mjd'].values, tf_ul['limiting_mag'],
+            #              markeredgecolor=color_dict[f],
+            #              markerfacecolor='w', fmt='v', linestyle='None')
+            # plt.plot([],[], 'kv', markeredgecolor='k', markerfacecolor='w',
+            #          label='Upper limits')
             
             if np.min(tf_det['mag']) < ymin:
                 ymin = np.min(tf_det['mag'])
@@ -94,4 +97,65 @@ def plot_gp(obj_model, number_col=4, show_title=True, show_legend=True):
     if show_legend:
         ax.legend(ncol=number_col)
     
+    plt.show()
+
+def plot_image(image):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+
+    titles = ['Science', 'Template', 'Difference']
+
+    for i, ax in enumerate(axes):
+        ax.imshow(image[:, :, i], cmap='gray')
+        ax.set_title(titles[i])
+        ax.axis('off')
+
+    plt.show()
+
+def plot_all(one_photo, one_cand, one_image):
+    plot_photometry(one_photo)
+    plot_image(one_image)
+    print(one_cand.head())
+
+def plot_light_curve(ax, data, color_dict, show_title, show_legend, number_col):
+    for column in data.columns:
+        if 'flux' in column and column != 'mjd':
+            filter_name = column.split('_')[1]
+            if filter_name in color_dict:
+                if not all(data[column] == -1):
+                    ax.plot(data['mjd'], data[column], label=f'Model {filter_name}', color=color_dict[filter_name])
+
+                    error_column = f'flux_error_{filter_name}'
+                    if error_column in data.columns:
+                        model_flux_error = data[error_column]
+                        ax.fill_between(data['mjd'], data[column] - model_flux_error, data[column] + model_flux_error, color=color_dict[filter_name], alpha=0.20)
+
+    ax.set_xlabel('Time (mjd)')
+    ax.set_ylabel('Flux')
+    if show_title:
+        obj_id = data['obj_id'].iloc[0]
+        obj_type = data['type'].iloc[0]
+        ax.set_title(f'Light Curve for Object ID: {obj_id} | Type: {obj_type}')
+    if show_legend:
+        ax.legend(ncol=number_col)
+
+def plot_gp_separated_by_obj_id(df, number_col=4, show_title=True, show_legend=True):
+    color_dict = {'ztfg': 'green', 'ztfr': 'red', 'ztfi': 'yellow'}
+    
+    obj_ids = df['obj_id'].unique()
+    
+    obj_model = df[df['obj_id'] == obj_ids[0]]
+    
+    fig1, ax1 = plt.subplots(figsize=(10, 6))
+    plot_light_curve(ax1, obj_model, color_dict, show_title, show_legend, number_col)
+    plt.show()
+    
+    remaining_obj_ids = obj_ids[obj_ids != obj_ids[0]][:6]
+    fig2, axes = plt.subplots(3, 2, figsize=(15, 10))
+    axes = axes.flatten()
+    
+    for ax, rem_obj_id in zip(axes, remaining_obj_ids):
+        rem_obj_model = df[df['obj_id'] == rem_obj_id]
+        plot_light_curve(ax, rem_obj_model, color_dict, show_title, show_legend, number_col)
+    
+    plt.tight_layout()
     plt.show()

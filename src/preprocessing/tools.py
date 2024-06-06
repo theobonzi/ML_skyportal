@@ -29,10 +29,17 @@ def count_obj_by_type(df):
     obj_id_count_per_type = df.groupby('type')['obj_id'].nunique()
     print(obj_id_count_per_type)
 
+# def robust_scale(dataframe, scale_columns):
+#     scaler = RobustScaler()
+#     scaler = scaler.fit(dataframe[scale_columns].to_numpy())
+#     dataframe.loc[:, scale_columns] = scaler.transform(
+#         dataframe[scale_columns].to_numpy()
+#     )
+#     return dataframe
+
 def robust_scale(dataframe, scale_columns):
     scaler = RobustScaler()
-    scaler = scaler.fit(dataframe[scale_columns])
-    dataframe.loc[:, scale_columns] = scaler.transform(
-        dataframe[scale_columns].to_numpy()
-    )
+    scaler.fit(dataframe[scale_columns].to_numpy())
+    dataframe[scale_columns] = scaler.transform(dataframe[scale_columns].to_numpy())
+    
     return dataframe
