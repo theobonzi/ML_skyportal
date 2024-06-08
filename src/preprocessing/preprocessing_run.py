@@ -5,7 +5,7 @@ import src.preprocessing.gaussian_process as gp
 import pandas as pd
 import numpy as np
 
-def preprocess_cand(one_cand, new_ids):
+def preprocess_cand_aug(one_cand, new_ids):
     columns_metadata_nb = one_cand.columns.difference(['objectId'])
     original_id = one_cand['objectId'].iloc[0]
 
@@ -44,6 +44,7 @@ def load_data(source):
     return source
 
 def preprocess_data(df):
+    df = df.copy()
     df['filter'] = df['filter'].replace({'sdssi': 'ztfi', 'sdssr': 'ztfr', 'sdssg': 'ztfg'})
     return df[df['filter'].isin(['ztfg', 'ztfr', 'ztfi'])]
 
@@ -59,7 +60,7 @@ def augment_and_clean_data(df):
     df_aug['magerr'] = df_aug['magerr'].apply(lambda x: max(x, 0))
     return df_aug
 
-def preprocess_photo(one_photo, verbose=False):
+def preprocess_photo_aug(one_photo, verbose=False):
     df = preprocess_data(one_photo)
     df = reset_data_indices(df)
     df = augment_and_clean_data(df)
@@ -97,7 +98,7 @@ def normalize_images(images):
     normalized_images = 2 * (images - min_val) / (max_val - min_val) - 1
     return normalized_images
 
-def preprocess_image(one_image, new_ids, verbose=False):
+def preprocess_image_aug(one_image, new_ids, verbose=False):
 
     image_ready = [one_image]
 
@@ -127,10 +128,39 @@ def preprocess_image(one_image, new_ids, verbose=False):
 
     return image_ready
 
-def process_data(one_photo, one_cand, one_image, verbose=False):
-    photo_ready = preprocess_photo(one_photo, verbose)
+def process_data_aug(one_photo, one_cand, one_image, verbose=False):
+    photo_ready = preprocess_photo_aug(one_photo, verbose)
     new_ids = photo_ready[photo_ready['obj_id'].str.contains('_')]['obj_id'].unique()
-    cand_ready = preprocess_cand(one_cand, new_ids)
-    image_ready = preprocess_image(one_image, new_ids, verbose)
+    cand_ready = preprocess_cand_aug(one_cand, new_ids)
+    image_ready = preprocess_image_aug(one_image, new_ids, verbose)
     
     return photo_ready, cand_ready, image_ready
+
+def preprocess_photo(one_photo, verbose=False):
+    df = preprocess_data(one_photo)
+    df = reset_data_indices(df)
+
+    df_gp_ready = prepare_gp_input(df)
+    
+    gp_df = apply_gaussian_process(df_gp_ready)
+    final_gp = scale_gp_output(gp_df)
+
+    final_gp.fillna(0., inplace=True)
+
+    if verbose:
+        plot_data.plot_gp(final_gp)
+    
+    return final_gp
+
+def preprocess_image(one_image, verbose=False):
+    image_ready = normalize_images(np.array(one_image))
+
+    if verbose:
+        plot_data.plot_image(image_ready)
+    return image_ready
+
+def process_data(one_photo, one_cand, one_image, verbose=False):
+    photo_ready = preprocess_photo(one_photo, verbose)
+    image_ready = preprocess_image(one_image, verbose)
+
+    return photo_ready, one_cand, image_ready
