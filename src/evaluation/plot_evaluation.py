@@ -6,6 +6,7 @@ import numpy as np
 import seaborn as sns
 import pandas as pd
 from scipy.interpolate import interp1d
+import plotly.graph_objects as go
 
 def plot_history(history):
     plt.plot(history.history['accuracy'])
@@ -215,3 +216,55 @@ def early_classification_tradeoff(model, X_test, y_test, reduction_step=0.05, mc
     plt.show()
 
     return average_days, accuracies
+
+def plot_supernova_classification(df):
+    plt.figure(figsize=(12, 6))
+
+    plt.fill_between(df['alertes'], 0, df['predict_other'], color='orange', alpha=0.7, label='Other')
+
+    plt.fill_between(df['alertes'], df['predict_other'], 1, color='blue', alpha=0.7, label='SN')
+
+    # Labels and title
+    plt.xlabel('Alertes')
+    plt.ylabel('Probability')
+    plt.title('Supernova Classification Over Time')
+    plt.ylim(0, 1)
+
+    plt.legend()
+
+    plt.show()
+
+def plot_interactive_supernova_classification(df):
+    fig = go.Figure()
+
+    fig.add_trace(go.Scatter(
+        x=df['alertes'], 
+        y=df['predict_other'],
+        fill='tozeroy',
+        mode='none',
+        name='Other',
+        hoverinfo='text',
+        text=df['predict_other'],
+        fillcolor='orange'
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=df['alertes'], 
+        y=df['predict_sn'] + df['predict_other'],
+        fill='tonexty',
+        mode='none',
+        name='SN',
+        hoverinfo='text',
+        text=df['predict_sn'],
+        fillcolor='blue'
+    ))
+
+    fig.update_layout(
+        title='Supernova Classification Over Time',
+        xaxis_title='Alertes',
+        yaxis_title='Probability',
+        yaxis=dict(range=[0, 1]),
+        hovermode='x unified'
+    )
+
+    fig.show()
