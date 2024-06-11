@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_data_from_kowalski(all=False, nb_obj=10):
+def get_data_from_kowalski(all=False, nb_obj=10, dataDir = "data_kowalski/"):
 
     api_token = os.getenv("FRITZ_API_TOKEN")
     kowalski_token = os.getenv("KOWALSKI_API_TOKEN")
@@ -34,8 +34,6 @@ def get_data_from_kowalski(all=False, nb_obj=10):
     else:
         print("Unable to connect to Kowalski")
         exit() 
-
-    dataDir = "data_kowalski/"
 
     df_bts = pd.read_csv('data/BTS.csv')
     objIds = sorted(list(set(df_bts["ZTFID"])))
@@ -265,4 +263,4 @@ def get_data(photometry, object_alerts, index=0):
     alert = object_alerts[index]
 
     metadata_df, assembled_image = process_alert(alert)
-    return photometry_filtered, metadata_df, assembled_image
+    return photometry_filtered, metadata_df, assembled_image, index

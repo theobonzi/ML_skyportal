@@ -67,7 +67,6 @@ def load_all_data(photo_path, metadata_path, images_path):
         "diffmaglim", 
         "ndethist", 
         "nmtchps", 
-        "drb", 
         "ncovhist", 
         "sharpnr", 
         "scorr", 

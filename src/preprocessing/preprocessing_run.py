@@ -145,6 +145,13 @@ def preprocess_photo(one_photo, verbose=False):
     gp_df = apply_gaussian_process(df_gp_ready)
     final_gp = scale_gp_output(gp_df)
 
+    columns = ['obj_id', 'mjd', 'flux_ztfg', 'flux_ztfi', 'flux_ztfr', 
+           'flux_error_ztfg', 'flux_error_ztfi', 'flux_error_ztfr']
+    
+    for col in columns:
+        if col not in final_gp.columns:
+            final_gp[col] = 0.0
+    
     final_gp.fillna(0., inplace=True)
 
     if verbose:

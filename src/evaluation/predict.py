@@ -3,11 +3,26 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import src.preprocessing.plot_data as plot_data
 import numpy as np
+import tensorflow as tf
+
+def update_zero_sum_columns(X):
+    for i in range(X.shape[2]):
+        if np.sum(X[:, :, i]) == 0:
+            X[:, :, i] = -999.0
+    return X
+
+def create_padding_mask(seq, pad_value=-999.0):
+    seq = tf.convert_to_tensor(seq, dtype=tf.float32)
+    seq = tf.cast(tf.math.equal(seq, pad_value), tf.float32)
+    return seq[:, tf.newaxis, tf.newaxis, :] 
 
 def predict_classes(photo_ready, cand_ready, image_ready):
     # photometry
     sequences = [group[['mjd', 'flux_ztfg', 'flux_ztfi', 'flux_ztfr']].values for _, group in photo_ready.groupby('obj_id')]
     padded_sequences = pad_sequences(sequences, padding='post', dtype='float32')
+
+    padded_sequences = update_zero_sum_columns(padded_sequences)
+    enc_padding_mask = create_padding_mask(padded_sequences)
 
     # metadata
     metadata = cand_ready.drop(columns='objectId')

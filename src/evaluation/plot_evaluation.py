@@ -239,23 +239,23 @@ def plot_interactive_supernova_classification(df):
 
     fig.add_trace(go.Scatter(
         x=df['alertes'], 
-        y=df['predict_other'],
+        y=df['type_1'],
         fill='tozeroy',
         mode='none',
         name='Other',
         hoverinfo='text',
-        text=df['predict_other'],
+        text=df['type_1'],
         fillcolor='orange'
     ))
 
     fig.add_trace(go.Scatter(
         x=df['alertes'], 
-        y=df['predict_sn'] + df['predict_other'],
+        y=df['type_2'] + df['type_1'],
         fill='tonexty',
         mode='none',
         name='SN',
         hoverinfo='text',
-        text=df['predict_sn'],
+        text=df['type_2'],
         fillcolor='blue'
     ))
 
