@@ -5,33 +5,36 @@ import src.preprocessing.plot_data as plot_data
 import numpy as np
 import tensorflow as tf
 
-def update_zero_sum_columns(X):
-    for i in range(X.shape[2]):
-        if np.sum(X[:, :, i]) == 0:
-            X[:, :, i] = -999.0
-    return X
-
-def create_padding_mask(seq, pad_value=-999.0):
-    seq = tf.convert_to_tensor(seq, dtype=tf.float32)
-    seq = tf.cast(tf.math.equal(seq, pad_value), tf.float32)
-    return seq[:, tf.newaxis, tf.newaxis, :] 
+def identify_useless_columns(group):
+    mask = (group[['flux_ztfg', 'flux_ztfi', 'flux_ztfr']] != 0).any().values
+    return mask
 
 def predict_classes(photo_ready, cand_ready, image_ready):
     # photometry
-    sequences = [group[['mjd', 'flux_ztfg', 'flux_ztfi', 'flux_ztfr']].values for _, group in photo_ready.groupby('obj_id')]
+    grouped = photo_ready.groupby('obj_id')
+    sequences = []
+
+    for _, group in grouped:
+        mask = identify_useless_columns(group)
+        # Appliquer le masque sur les colonnes de flux
+        filtered_group = group[['mjd'] + list(group.columns[mask + 1])].values
+        sequences.append(filtered_group)    
+        
     padded_sequences = pad_sequences(sequences, padding='post', dtype='float32')
 
-    padded_sequences = update_zero_sum_columns(padded_sequences)
-    enc_padding_mask = create_padding_mask(padded_sequences)
+    padded_sequences = np.array(padded_sequences)
 
     # metadata
-    metadata = cand_ready.drop(columns='objectId')
+    metadata = cand_ready.drop(columns='obj_id')
+
+    image_ready = np.array(image_ready)
 
     final_data = [padded_sequences, metadata, image_ready]
 
     return final_data
 
 def predict_T2(final_data, model):
+    padded_sequences, metadata, image_ready = final_data
     y_pred = model.predict(final_data)
 
     return y_pred, np.argmax(y_pred, axis=1)

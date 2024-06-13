@@ -170,4 +170,6 @@ def process_data(one_photo, one_cand, one_image, verbose=False):
     photo_ready = preprocess_photo(one_photo, verbose)
     image_ready = preprocess_image(one_image, verbose)
 
-    return photo_ready, one_cand, image_ready
+    image_reshaped = np.expand_dims(image_ready, axis=0)
+
+    return photo_ready, one_cand, image_reshaped

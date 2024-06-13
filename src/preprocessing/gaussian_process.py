@@ -121,7 +121,7 @@ def process_gaussian(df, kernel=None, number_gp=100, save=False, name=''):
     
     res_df = pd.DataFrame()
 
-    for obj_id in tqdm.tqdm(df['obj_id'].unique()):
+    for obj_id in df['obj_id'].unique():
         obj_df = df[df['obj_id'] == obj_id]
         type_obj = obj_df['type'].values[0]
         obj_df.reset_index(drop=True, inplace=True)

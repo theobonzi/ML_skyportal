@@ -217,12 +217,12 @@ def early_classification_tradeoff(model, X_test, y_test, reduction_step=0.05, mc
 
     return average_days, accuracies
 
-def plot_supernova_classification(df):
+def plot_supernova_classification(df, types):
     plt.figure(figsize=(12, 6))
 
-    plt.fill_between(df['alertes'], 0, df['predict_other'], color='orange', alpha=0.7, label='Other')
+    plt.fill_between(df['alertes'], 0, df['type_1'], color='orange', alpha=0.7, label=types[0])
 
-    plt.fill_between(df['alertes'], df['predict_other'], 1, color='blue', alpha=0.7, label='SN')
+    plt.fill_between(df['alertes'], df['type_1'], 1, color='blue', alpha=0.7, label=types[1])
 
     # Labels and title
     plt.xlabel('Alertes')
@@ -234,17 +234,67 @@ def plot_supernova_classification(df):
 
     plt.show()
 
-def plot_interactive_supernova_classification(df):
+# def plot_interactive_supernova_classification(df, types):
+#     fig = go.Figure()
+
+#     fig.add_trace(go.Scatter(
+#         x=df['alertes'], 
+#         y=df['type_1'],
+#         fill='tozeroy',
+#         mode='none',
+#         name=types[0],
+#         hoverinfo='text',
+#         text=df['type_1'],
+#         fillcolor='orange'
+#     ))
+
+#     fig.add_trace(go.Scatter(
+#         x=df['alertes'], 
+#         y=df['type_2'] + df['type_1'],
+#         fill='tonexty',
+#         mode='none',
+#         name=types[1],
+#         hoverinfo='text',
+#         text=df['type_2'],
+#         fillcolor='blue'
+#     ))
+
+#     fig.update_layout(
+#         title='Supernova Classification Over Time',
+#         xaxis_title='Alertes',
+#         yaxis_title='Probability',
+#         yaxis=dict(range=[0, 1]),
+#         hovermode='x unified'
+#     )
+
+#     fig.show()
+
+def plot_interactive_supernova_classification(df, types, counts_dict):
     fig = go.Figure()
+
+    hover_headers = [
+        f"Alerte: {a}<br>Prediction: {types[p]}<br>---<br>ztfr: {counts_dict.get(a, {}).get('ztfr', 0)} | ztfg: {counts_dict.get(a, {}).get('ztfg', 0)} | ztfi: {counts_dict.get(a, {}).get('ztfi', 0)}<br>---"
+        for a, p in zip(df['alertes'], df['prediction'])
+    ]
+
+    hover_text_1 = [
+        f"{types[0]}: {round(df.loc[i, 'type_1']*100, 4)}%"
+        for i in range(len(df))
+    ]
+
+    hover_text_2 = [
+        f"{types[1]}: {round(df.loc[i, 'type_2']*100, 4)}%"
+        for i in range(len(df))
+    ]
 
     fig.add_trace(go.Scatter(
         x=df['alertes'], 
         y=df['type_1'],
         fill='tozeroy',
         mode='none',
-        name='Other',
+        name=types[0],
         hoverinfo='text',
-        text=df['type_1'],
+        text=[f"<br>{text}" for header, text in zip(hover_headers, hover_text_1)],
         fillcolor='orange'
     ))
 
@@ -253,9 +303,9 @@ def plot_interactive_supernova_classification(df):
         y=df['type_2'] + df['type_1'],
         fill='tonexty',
         mode='none',
-        name='SN',
+        name=types[1],
         hoverinfo='text',
-        text=df['type_2'],
+        text=[f"{header}<br>{text}" for header, text in zip(hover_headers, hover_text_2)],
         fillcolor='blue'
     ))
 

@@ -10,12 +10,15 @@ class PrunableClusterableLayer(
     tfmot.clustering.keras.ClusterableLayer,
 ):
     def get_prunable_weights(self):
+        # Prune kernel only, as pruning bias can harm model accuracy.
         return [self.conv1d.kernel]
 
     def get_clusterable_weights(self):
+        # Cluster only the kernel as clustering bias usually harms model accuracy.
         return [("kernel", self.conv1d.kernel)]
 
     def get_clusterable_algorithm(self, weight_name):
+        # Example algorithm, customize as necessary
         if weight_name == "kernel":
             return tfmot.clustering.keras.cluster_config.CentroidInitialization.LINEAR
         else:

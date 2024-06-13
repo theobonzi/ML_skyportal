@@ -204,9 +204,9 @@ def process_alert(alert):
     # metadata
     metadata = alert['candidate']
     metadata_df = pd.DataFrame([metadata])
-    metadata_df['objectId'] = alert['objectId']
+    metadata_df['obj_id'] = alert['objectId']
     columns_metadata = [
-        "objectId",
+        "obj_id",
         "sgscore1", "sgscore2", 
         "distpsnr1", "distpsnr2", 
         "fwhm", 
@@ -250,17 +250,52 @@ def cut_photometry(photometry, object_alertes, index):
     photometry_filtered = photometry[photometry['jd'] < jd_current]
     return photometry_filtered
 
-def get_data(photometry, object_alerts, index=0):
+# def get_data(photometry, object_alerts, index=0):
 
-    first_index = get_first_valid_index(photometry, object_alerts)
+#     first_index = get_first_valid_index(photometry, object_alerts)
+#     if first_index == -1:
+#         return None, None
+    
+#     if index < first_index:
+#         index = first_index
+
+#     photometry_filtered = cut_photometry(photometry, object_alerts, index)
+#     alert = object_alerts[index]
+
+#     metadata_df, assembled_image = process_alert(alert)
+#     return photometry_filtered, metadata_df, assembled_image, index
+
+def get_data(photometry, object_alerts, index=0):
+    try:
+        first_index = get_first_valid_index(photometry, object_alerts)
+    except Exception as e:
+        print(f"Error in get_first_valid_index: {e}")
+        return None, None, None, None
+
     if first_index == -1:
-        return None, None
+        print("No valid index found in photometry for the given object_alerts")
+        return None, None, None, None
     
     if index < first_index:
+        print(f"Provided index {index} is less than the first valid index {first_index}. Setting index to {first_index}.")
         index = first_index
 
-    photometry_filtered = cut_photometry(photometry, object_alerts, index)
-    alert = object_alerts[index]
+    try:
+        photometry_filtered = cut_photometry(photometry, object_alerts, index)
+    except Exception as e:
+        print(f"Error in cut_photometry: {e}")
+        return None, None, None, None
+    
+    try:
+        alert = object_alerts[index]
+    except Exception as e:
+        print(f"Error accessing object_alerts at index {index}: {e}")
+        return None, None, None, None
 
-    metadata_df, assembled_image = process_alert(alert)
+    try:
+        metadata_df, assembled_image = process_alert(alert)
+    except Exception as e:
+        print(f"Error in process_alert: {e}")
+        return None, None, None, None
+
     return photometry_filtered, metadata_df, assembled_image, index
