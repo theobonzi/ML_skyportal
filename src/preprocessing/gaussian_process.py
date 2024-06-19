@@ -5,6 +5,7 @@ import scipy.optimize as op
 import tqdm
 from functools import partial
 from astropy.table import Table, vstack
+import pickle
 
 pb_wavelengths = {
     'ztfg': 4800.,
@@ -121,7 +122,7 @@ def process_gaussian(df, kernel=None, number_gp=100, save=False, name=''):
     
     res_df = pd.DataFrame()
 
-    for obj_id in df['obj_id'].unique():
+    for obj_id in tqdm.tqdm(df['obj_id'].unique()):
         obj_df = df[df['obj_id'] == obj_id]
         type_obj = obj_df['type'].values[0]
         obj_df.reset_index(drop=True, inplace=True)
@@ -152,3 +153,15 @@ def process_gaussian(df, kernel=None, number_gp=100, save=False, name=''):
         res_df.to_csv(filename, index=False)
         print(f'File {filename} saved successfully')
     return res_df
+
+def save_kernel(kernel, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(kernel, f)
+    print(f'Kernel saved to {filename}')
+
+# Recharger le kernel
+def load_kernel(filename):
+    with open(filename, 'rb') as f:
+        kernel = pickle.load(f)
+    print(f'Kernel loaded from {filename}')
+    return kernel

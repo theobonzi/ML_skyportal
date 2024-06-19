@@ -52,21 +52,21 @@ def get_data_from_kowalski(all=False, nb_obj=10, dataDir = "data_kowalski/"):
         else:
             continue
 
-        endpoint = f"sources/{objId}/photometry"                               
-        url = urllib.parse.urljoin(host, f'/api/{endpoint}') 
-        r = requests.get(url, headers=headers) 
-        photometry = r.json()['data'] 
-        photometryFile = os.path.join(objDirectory, 'photometry.json') 
-        with open(photometryFile, 'w') as fp:  
-            json.dump(photometry, fp)
+        # endpoint = f"sources/{objId}/photometry"                               
+        # url = urllib.parse.urljoin(host, f'/api/{endpoint}') 
+        # r = requests.get(url, headers=headers) 
+        # photometry = r.json()['data'] 
+        # photometryFile = os.path.join(objDirectory, 'photometry.json') 
+        # with open(photometryFile, 'w') as fp:  
+        #     json.dump(photometry, fp)
 
-        endpoint = f"sources/{objId}/spectra"
-        url = urllib.parse.urljoin(host, f'/api/{endpoint}')
-        r = requests.get(url, headers=headers)
-        spectra = r.json()['data']
-        spectraFile = os.path.join(objDirectory, 'spectra.json')
-        with open(spectraFile, 'w') as fp:
-            json.dump(spectra, fp)
+        # endpoint = f"sources/{objId}/spectra"
+        # url = urllib.parse.urljoin(host, f'/api/{endpoint}')
+        # r = requests.get(url, headers=headers)
+        # spectra = r.json()['data']
+        # spectraFile = os.path.join(objDirectory, 'spectra.json')
+        # with open(spectraFile, 'w') as fp:
+        #     json.dump(spectra, fp)
 
         query = {
             "query_type": "find",
@@ -181,6 +181,10 @@ def load_kowalski_data(objId, path):
     objDirectory = os.path.join(path, objId)
 
     photo_df = pd.read_json(os.path.join(objDirectory, 'photometry.json'))
+
+    if photo_df.empty:
+        return None, None
+
     photo_df = photo_df[['obj_id', 'mjd', 'mag', 'magerr', 'snr', 'limiting_mag', 'filter']]
     photo_df['type'] = "?"
     photo_df['jd'] = photo_df['mjd'] + 2400000.5
@@ -277,7 +281,6 @@ def get_data(photometry, object_alerts, index=0):
         return None, None, None, None
     
     if index < first_index:
-        print(f"Provided index {index} is less than the first valid index {first_index}. Setting index to {first_index}.")
         index = first_index
 
     try:

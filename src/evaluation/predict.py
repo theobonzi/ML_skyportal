@@ -34,10 +34,43 @@ def predict_classes(photo_ready, cand_ready, image_ready):
     return final_data
 
 def predict_T2(final_data, model):
-    padded_sequences, metadata, image_ready = final_data
     y_pred = model.predict(final_data)
 
     return y_pred, np.argmax(y_pred, axis=1)
+
+def taxonomy_prediction(final_data, model_step1, model_step2, model_step3a, model_step3b, treshold=0.6):
+    # Step 1
+    y_pred, y_pred_classes = predict_T2(final_data, model_step1)
+    y_pred_sum = np.sum(y_pred, axis=0)
+
+    if np.max(y_pred_sum) - np.min(y_pred_sum) > treshold:
+        y_pred_classes = np.argmax(y_pred_sum)
+    
+    # Step 2
+    if y_pred_classes == 1:
+        y_pred = predict_T2(model_step2, final_data)
+        y_pred_sum = np.sum(y_pred, axis=0)
+
+        if np.max(y_pred_sum) - np.min(y_pred_sum) > treshold:
+            y_pred_classes = np.argmax(y_pred_sum)
+
+        # Step 3a
+        if y_pred_classes == 0:
+            y_pred = predict_T2(model_step3a, final_data)
+            y_pred_sum = np.sum(y_pred, axis=0)
+
+            if np.max(y_pred_sum) - np.min(y_pred_sum) > treshold:
+                y_pred_classes = np.argmax(y_pred_sum)
+        
+        # Step 3b
+        elif y_pred_classes == 1:
+            y_pred = predict_T2(model_step3b, final_data)
+            y_pred_sum = np.sum(y_pred, axis=0)
+
+            if np.max(y_pred_sum) - np.min(y_pred_sum) > treshold:
+                y_pred_classes = np.argmax(y_pred_sum)
+        
+    return y_pred, y_pred_classes
 
 def plot_photometry(df, relevant_ids):
     for obj_id in relevant_ids:

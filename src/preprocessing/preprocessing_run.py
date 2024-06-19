@@ -33,9 +33,6 @@ def apply_gaussian_process(df, kernel=None):
 
 def scale_gp_output(gp_df):
     scale_columns = [col for col in gp_df.columns if 'flux' in col]
-    for col in scale_columns:
-        if col not in gp_df.columns:
-            gp_df[col] = -999.0
     return tools.robust_scale(gp_df, scale_columns)
 
 def load_data(source):
@@ -144,15 +141,13 @@ def preprocess_photo(one_photo, verbose=False):
     
     gp_df = apply_gaussian_process(df_gp_ready)
     final_gp = scale_gp_output(gp_df)
-
-    columns = ['obj_id', 'mjd', 'flux_ztfg', 'flux_ztfi', 'flux_ztfr', 
-           'flux_error_ztfg', 'flux_error_ztfi', 'flux_error_ztfr']
     
-    for col in columns:
-        if col not in final_gp.columns:
-            final_gp[col] = 0.0
-    
-    final_gp.fillna(0., inplace=True)
+    final_gp['flux_ztfg'] = final_gp['flux_ztfg'].fillna(0.0)
+    # final_gp['flux_ztfi'] = final_gp['flux_ztfi'].fillna(0.0)
+    final_gp['flux_ztfr'] = final_gp['flux_ztfr'].fillna(0.0)
+    final_gp['flux_error_ztfg'] = final_gp['flux_error_ztfg'].fillna(0.0)
+    # final_gp['flux_error_ztfi'] = final_gp['flux_error_ztfi'].fillna(0.0)
+    final_gp['flux_error_ztfr'] = final_gp['flux_error_ztfr'].fillna(0.0)
 
     if verbose:
         plot_data.plot_gp(final_gp)
